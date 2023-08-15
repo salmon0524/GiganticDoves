@@ -12,6 +12,8 @@ bla = 0
 draw = 0
 castled = 0
 
+
+#Simple Network, 1:Convolutional layer, pool down, and several linears into (number of legal moves) of outputs. RL, Using Adam, maximizing the Reward.
 class BlackChessDoveAI(nn.Module):
     def __init__(self,n_outputs):
         super(BlackChessDoveAI, self).__init__()
@@ -175,6 +177,7 @@ gamma = 0.99
 n_outputs = 4096
 
 
+#Promotion: Check if pawn is in the last row, if so, promotion to a queen (not yet able to underpromote or choose what to promote into)
 def promotion(position, turn, promotionto):
     if turn == 1:
         pawns = torch.nonzero((position.abs() == 1) & (position > 0), as_tuple=False)
@@ -195,10 +198,11 @@ def promotion(position, turn, promotionto):
                 continue
         return position
 
+#Getting the index of the move
 def get_move_index(move):
     return all_moves.index(move)
 
-
+#Choosing the move index by taking the highest propability of AI.
 def select_legal_action(network_output, position, legal_moves, gamehis, turn, last_move, epsilon=0.15):
     if turn == 1:
         for move in legal_moves:
@@ -241,7 +245,7 @@ def select_legal_action(network_output, position, legal_moves, gamehis, turn, la
                             else:
                                 break
 
-
+#Explore
     if random.random() <= epsilon:
         return random.choice(legal_moves)
     legal_move_indices = [get_move_index(move) for move in legal_moves]
@@ -261,6 +265,8 @@ def select_legal_action(network_output, position, legal_moves, gamehis, turn, la
 
 times = 100
 epochs = 100
+
+#Simulating
 for times in range(times):
     whitenet = WhiteChessDoveAI(n_outputs)
     whitenet.load_state_dict(torch.load('WhiteChessDove.pth'))
@@ -350,6 +356,7 @@ for times in range(times):
             blacknet.remember(blalaspos, blacklast_move, -500)
             draw = draw + 1
 
+        #Training!
         whitenet.train_policy_network()
         blacknet.train_policy_network()
         print("Train done")
@@ -357,7 +364,7 @@ for times in range(times):
         blacknet.clear_memory()
     torch.save(whitenet.state_dict(), 'WhiteChessDove.pth')
     torch.save(blacknet.state_dict(), 'BlackChessDove.pth')
-
+#Giving a summary
 print(f"Summary: White won {whi} times, black won {bla} times, drew {draw} times, castled {castled} time(s).")
 
 
