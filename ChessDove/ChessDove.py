@@ -1,4 +1,6 @@
 import torch
+
+#some variables
 turn = 1
 winner = 0
 kingsaf = 0
@@ -20,6 +22,7 @@ castle_mov_b2 = ((0, 4),(0, 6))
 #         [2, 3, 4, 5, 6, 0, 0, 2]
 #         ])
 
+#the chessboard in tensor
 position = torch.tensor([
         [-2, -3, -4, -5, -6, -4, -3, -2],
         [-1, -1, -1, -1, -1, -1, -1, -1],
@@ -32,7 +35,7 @@ position = torch.tensor([
         ])
 
 
-
+#pawn move function. It works like: Find every pawn, take the position, check the above square is empty or not, if empty, add the square to moves (list of avilible moves).
 def pawn_moves(position, turn):
     moves = []
     if turn == 1:
@@ -58,7 +61,8 @@ def pawn_moves(position, turn):
                     moves.append(((x, y), (x + 2, y)))
         
         return moves
-    
+
+#pawm attack function. It works like: Find every pawn, check diagoally, if there is an enemy's piece, add the square to moves.
 def pawn_attack(position,turn):
     moves = []
     if turn == 1:
@@ -87,6 +91,8 @@ def pawn_attack(position,turn):
                 if left_up > 0:
                     moves.append((((x, y),(x + 1, y - 1))))
         return moves  
+
+#Our favorate, en passant!! It finds every pawn, checks if the pawn have moved before, if not, it checks the en passant condition (more details in chess rule!), if so, add to moves.
 def pawn_en_passant(position, turn, last_move):
     moves = []
     if turn == 1:
@@ -111,6 +117,8 @@ def pawn_en_passant(position, turn, last_move):
                 if position[last_move[1]] == 1 and last_move[0][0] == 1 and last_move[1][0] == 3 and last_move[1][1] == y - 1:
                     moves.append((((x, y),(x + 1, y - 1))))
         return moves
+
+#Bishop moves/attacks. It works like: Find bishops, iterates over it's all diagonal direction, if the square is empty or have enemy's piece, add into moves.
 def bishop_moves(position, turn):
     moves = []
     if turn == 1:
@@ -148,6 +156,8 @@ def bishop_moves(position, turn):
                     nx += dx
                     ny += dy
     return moves
+
+#Knight move/take. It works like: Find every knight, iterate over very possible direction(move), add to move if...
 def knight_moves(position, turn):
     moves = []
     if turn == 1:
@@ -171,6 +181,8 @@ def knight_moves(position, turn):
                     if position[nx, ny] >= 0:
                         moves.append(((x, y), (nx, ny)))
     return moves
+
+#Rook moves, works quite same as bishop moves
 def rook_moves(position, turn):
     moves = []
     if turn == 1:
@@ -226,6 +238,8 @@ def rook_moves(position, turn):
                         break
                     ny += dy
     return moves
+
+#Queen moves, rook move+ bishop move
 def queen_moves(position, turn):
     moves = []
     if turn == 1:
@@ -307,6 +321,8 @@ def queen_moves(position, turn):
                         break
                     ny += dy
     return moves
+
+#King moves, find king, iterate oever every direction, add if...
 def king_moves(position, turn, gamehis, last_move):
     moves = []
     if turn == 1:
@@ -335,6 +351,7 @@ def king_moves(position, turn, gamehis, last_move):
     moves.extend(castl)
     return moves
 
+#Check if the king is castlable: Haven't moved, rook(s) hasn't moved, they are in right position (rooks are not taken).
 def is_castlable(gamehis, turn, pos, last_move):
     castle_mov = []
     if turn == 1:
@@ -355,36 +372,10 @@ def is_castlable(gamehis, turn, pos, last_move):
                     castle_mov.append(castle_mov_w1)
     return castle_mov
 
-def checkcastright(turn, gamehis):
-    if turn == 1:
-        if all(move[0] != (7, 4) for move in gamehis):
-            if all(move[0] != (7, 7) for move in gamehis):
-                if position[7][5].item() == 0 and position[7][6] == 0 and position[7][4] == 6 and position[7][7] == 2:
-                    return True
-    else:
-        if all(move[0] != (0, 4) for move in gamehis):
-            if all(move[0] != (0, 7) for move in gamehis):
-                if position[0][5].item() == 0 and position[0][6] == 0 and position[0][4] == 6 and position[0][7] == 2:
-                    return True
-    return False
-                
-def checkcastleft(turn, gamehis):
-    if turn == 1:
-        if all(move[0] != (7, 4) for move in gamehis):
-            if all(move[0] != (7, 0) for move in gamehis):
-                if position[7][1].item() == 0 and position[7][2] == 0 and position[7][3] == 0 and position[7][4] == 6 and position[7][0] == 2:
-                    return True
-    else:
-        if all(move[0] != (0, 4) for move in gamehis):
-            if all(move[0] != (0, 0) for move in gamehis):
-                if position[0][1].item() == 0 and position[0][2] == 0 and position[0][3] == 0 and position[0][4] == 6 and position[0][0] == 2:
-                    return True
-    return False
-
                 
 
 
-
+#The material equality score. (Numbers are from stockfish 15.~version)
 def material_equ(position):
     material_score = 0
     pawns = torch.nonzero(position == 1, as_tuple=False)
@@ -420,6 +411,8 @@ def material_equ(position):
     
     return material_score
 
+
+#Returning material difference point
 def material_diff(poshis):
     oldpos = poshis[len(poshis) - 2]
     newpos = poshis[len(poshis) - 1]
@@ -427,6 +420,8 @@ def material_diff(poshis):
     newmat = material_equ(newpos)
     return (newmat - oldmat) * -1
 
+
+#return all the legal moves
 def get_legalmoves(position, turn, last_move, gamehis):
     legalmoves = []
     legalmoves.append(pawn_moves(position, turn))
@@ -440,13 +435,15 @@ def get_legalmoves(position, turn, last_move, gamehis):
     legalmoves = [move for move in legalmoves if move]
     return legalmoves
 
+#making the moves on the position(chess board)
 def make_moves(position, legalmoves):
     positions = []
     for type in legalmoves:
         for move in type:
             positions.append(make_move(position, move).tolist())
         return torch.tensor(positions)
-    
+
+#maing the move on the position(chess board)
 def make_move(position, move):
     start, finish = move[0], move[1]
     oldposition = position.clone()
@@ -456,6 +453,7 @@ def make_move(position, move):
     position = oldposition
     return position
 
+#Castling!
 def Castle_move(curposition, move):
     if move == ((7, 4), (7, 6)):
         position2 = curposition.clone()
@@ -486,7 +484,8 @@ def Castle_move(curposition, move):
         position2[0][3] = -2
         return position2
 
-
+#Removing the pinned piece's movement from the legal move list. Checking by: if the piece moved, if the king's coordinate is in the end of other's move list, remove the piece's movement.
+#If there is a pinned piece, it take one point down from Kingsaf.
 def remove_pinned(position, turn, legalmoves, last_move, gamehis): 
     global kingsaf
     kingsaf = 0
@@ -516,6 +515,8 @@ def remove_pinned(position, turn, legalmoves, last_move, gamehis):
         presentlegal = [move for move in presentlegal if move not in pinned]
         return presentlegal
 
+
+#Check if the game is ended or not.
 def check_con(position, turn, legalmove, last_move, history, gamehis):
     global winner
     positioncount = 0
@@ -558,7 +559,7 @@ def check_con(position, turn, legalmove, last_move, history, gamehis):
 
 
     
-
+#I choose not to explain further in below codes(they're obvious!).
 def get_final_legal(position, turn, last_move, gamehis):
     legalmoves = get_legalmoves(position, turn, last_move, gamehis)
     legalmoves = remove_pinned(position, turn, legalmoves, last_move, gamehis)
