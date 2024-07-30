@@ -19,7 +19,7 @@ castle_mov_b2 = ((0, 4),(0, 6))
 #         [0, 0, 0, 0, 0, 0, 0, 0],
 #         [0, 0, 0, 0, 0, 0, 0, 0],
 #         [1, 1, 1, 1, 1, 1, 1, 1],
-#         [2, 3, 4, 5, 6, 0, 0, 2]
+#         [2, 3, 4, 5, 6, 4, 3, 2]
 #         ])
 
 #the chessboard in tensor
@@ -346,34 +346,64 @@ def king_moves(position, turn, gamehis, last_move):
                 if position[nx, ny] >= 0:
                     moves.append(((x, y), (nx, ny)))
 
-    
     castl = is_castlable(gamehis, turn, position, last_move)
     moves.extend(castl)
     return moves
 
 #Check if the king is castlable: Haven't moved, rook(s) hasn't moved, they are in right position (rooks are not taken).
+
 def is_castlable(gamehis, turn, pos, last_move):
     castle_mov = []
     if turn == 1:
-        if all(move[0] != (7, 4) for move in gamehis):
-            if all(move[0] != (7, 7) for move in gamehis):
-                if position[7][5].item() == 0 and position[7][6] == 0 and position[7][4] == 6 and position[7][7] == 2:
-                    castle_mov.append(castle_mov_w2)
-            if all(move[0] != (7, 0) for move in gamehis):
-                if position[7][1].item() == 0 and position[7][2] == 0 and position[7][3] == 0 and position[7][4] == 6 and position[7][0] == 2:
-                    castle_mov.append(castle_mov_w1)
+        can = True
+        for move in gamehis:
+                if move[0] != (7, 4):
+                    if move[0] != (7, 7):
+                        pass
+                    else:
+                        can = False
+                else:
+                    can = False
+        if can and position[7][5].item() == 0 and position[7][6] == 0 and position[7][4] == 6 and position[7][7] == 2:
+            castle_mov.append(castle_mov_w2)
+        can = True
+        for move in gamehis:
+            if can:
+                if move[0] != (7, 4):
+                    if move[0] != (7, 0):
+                        pass
+                    else:
+                        can = False
+                else:
+                    can = False
+        if can and position[7][1].item() == 0 and position[7][2] == 0 and position[7][3] == 0 and position[7][4] == 6 and position[7][0] == 2:
+            castle_mov.append(castle_mov_w1)
     else:
-        if all(move[0] != (0, 4) for move in gamehis):
-            if all(move[0] != (0, 7) for move in gamehis):
-                if position[0][5].item() == 0 and position[0][6] == 0 and position[0][4] == 6 and position[0][7] == 2:
-                    castle_mov.append(castle_mov_b2)
-            if all(move[0] != (0, 0) for move in gamehis):
-                if position[0][1].item() == 0 and position[0][2] == 0 and position[0][3] == 0 and position[0][4] == 6 and position[0][0] == 2:
-                    castle_mov.append(castle_mov_w1)
+        can = True
+        for move in gamehis:
+            if can:
+                if move[0] != (7, 4):
+                    if move[0] != (7, 7):
+                        pass
+                    else:
+                        can = False
+                else:
+                    can = False
+        if can and position[0][5].item() == 0 and position[0][6] == 0 and position[0][4] == -6 and position[0][7] == -2:
+            castle_mov.append(castle_mov_b2)
+        can = True
+        for move in gamehis:
+            if can:
+                if move[0] != (0, 4):
+                    if move[0] != (0, 0):
+                        pass
+                    else:
+                        can = False
+                else:
+                    can = False
+        if can and position[0][1].item() == 0 and position[0][2] == 0 and position[0][3] == 0 and position[0][4] == -6 and position[0][0] == -2:
+            castle_mov.append(castle_mov_b1)
     return castle_mov
-
-                
-
 
 #The material equality score. (Numbers are from stockfish 15.~version)
 def material_equ(position):
@@ -453,7 +483,7 @@ def make_move(position, move):
     position = oldposition
     return position
 
-#Castling!
+#Castling
 def Castle_move(curposition, move):
     if move == ((7, 4), (7, 6)):
         position2 = curposition.clone()
@@ -494,7 +524,6 @@ def remove_pinned(position, turn, legalmoves, last_move, gamehis):
     turn = turn * -1
     for thing in presentlegal:
         for one in thing:
-            
             pos = make_move(position, one)
             legalmoves = get_legalmoves(pos, turn, last_move, gamehis)
             for type in legalmoves:
@@ -516,7 +545,6 @@ def remove_pinned(position, turn, legalmoves, last_move, gamehis):
         return presentlegal
 
 
-#Check if the game is ended or not.
 def check_con(position, turn, legalmove, last_move, history, gamehis):
     global winner
     positioncount = 0
@@ -534,15 +562,15 @@ def check_con(position, turn, legalmove, last_move, history, gamehis):
         turn = turn * -1
         legalmoves = get_legalmoves(position, turn, last_move, gamehis)
         for move in legalmoves:
-            mov = move[0]
-            finish = [mov[1]]
-            king_cor = [(torch.nonzero(position * turn == -6,as_tuple=False).tolist()[0][0], torch.nonzero(position * turn == -6,as_tuple=False).tolist()[0][1])]
-            if finish == king_cor:
-                winner = turn
-                print("Checkmate by " + str(winner))
-                return False
-            else:
-                continue
+            for mov in move:
+                finish = [mov[1]]
+                king_cor = [(torch.nonzero(position * turn == -6,as_tuple=False).tolist()[0][0], torch.nonzero(position * turn == -6,as_tuple=False).tolist()[0][1])]
+                if finish == king_cor:
+                    winner = turn
+                    print("Checkmate by " + str(winner))
+                    return False
+                else:
+                    continue
         print("Stalemate!")
         winner = 0.5
         return False
@@ -559,7 +587,6 @@ def check_con(position, turn, legalmove, last_move, history, gamehis):
 
 
     
-#I choose not to explain further in below codes(they're obvious!).
 def get_final_legal(position, turn, last_move, gamehis):
     legalmoves = get_legalmoves(position, turn, last_move, gamehis)
     legalmoves = remove_pinned(position, turn, legalmoves, last_move, gamehis)
