@@ -1,4 +1,4 @@
 This is ChessDove: A simplistic AI with several layers designed to play chess against itself (using the same model). Its performance is currently limited due to inadequate rewarding, structure, and strategy.
 
-ChessDove: encompasses the basic rules and strategies for chess moves. This includes standard moves, castling, draw by repetition, and draws due to insufficient material.
+ChessDove: the basic rules and strategies for chess moves. This includes standard moves, castling, draw by repetition, and draws due to insufficient material.
 GamePlay: includes the structure and training for the AI(s).
